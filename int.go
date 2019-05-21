@@ -720,35 +720,41 @@ func (z *Int) Exp(x, y, m *Int) *Int {
 }
 
 // ExpSquare sets z = x**(2**y) mod |m| (i.e. the sign of m is ignored), and returns z.
-// If y <= 0, the result is 1; if m == nil or m == 0, z = x**(2**y).
+// If y < 0, the result is 1; if y == 0 the result is x, if m == nil or m == 0, z = x**(2**y).
 // See Knuth, volume 2, section 4.6.3.
 func (z *Int) ExpSquare(x *Int, y *Int, m *Int) *Int {
 	x.doinit()
 	z.doinit()
-	if y.Sign() <= 0 {
+	if y.Sign() < 0 {
 		z.SetInt64(1)
 		return z
 	}
 
+	z.Set(x)
+
 	// We'll be using "two" a lot
-	var two *Int
+	two := new(Int)
 	two.doinit()
 	two.SetInt64(2)
 
-	var one *Int
+	one := new(Int)
 	one.doinit()
 	one.SetInt64(1)
+
+	// Set iterator
+	it := new(Int)
+	it.Set(y)
 
 	if m == nil || m.Sign() == 0 {
 		// loop? to be super optimized just change gmp itself to include a
 		// "this will do 2 ** 2 ** t and that's it" method
-		for ; y.Sign() > 0; y.Sub(y, one) {
-			C.mpz_pow_ui(&z.i[0], &x.i[0], C.mpz_get_ui(&two.i[0]))
+		for ; it.Sign() != 0; it.Sub(it, one) {
+			C.mpz_pow_ui(&z.i[0], &z.i[0], C.mpz_get_ui(&two.i[0]))
 		}
 	} else {
 		m.doinit()
-		for ; y.Sign() > 0; y.Sub(y, one) {
-			C.mpz_powm(&z.i[0], &x.i[0], &two.i[0], &m.i[0])
+		for ; it.Sign() != 0; it.Sub(it, one) {
+			C.mpz_powm(&z.i[0], &z.i[0], &two.i[0], &m.i[0])
 		}
 	}
 	return z

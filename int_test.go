@@ -871,8 +871,8 @@ var expSquareTests = []struct {
 }{
 	{"5", "-7", "", "1"},
 	{"-5", "-7", "", "1"},
-	{"5", "0", "", "1"},
-	{"-5", "0", "", "1"},
+	{"5", "0", "", "5"},
+	{"-5", "0", "", "-5"},
 	{"5", "1", "", "25"},
 	{"-5", "1", "", "25"},
 	{"-2", "3", "2", "0"},
@@ -888,7 +888,7 @@ var expSquareTests = []struct {
 }
 
 func TestExpSquare(t *testing.T) {
-	for i, test := range expTests {
+	for i, test := range expSquareTests {
 		x, ok1 := new(Int).SetString(test.x, 0)
 		y, ok2 := new(Int).SetString(test.y, 0)
 		out, ok3 := new(Int).SetString(test.out, 0)
@@ -907,7 +907,7 @@ func TestExpSquare(t *testing.T) {
 			continue
 		}
 
-		z1 := new(Int).Exp(x, y, m)
+		z1 := new(Int).ExpSquare(x, y, m)
 		if !isNormalized(z1) {
 			t.Errorf("#%d: %v is not normalized", i, *z1)
 		}
@@ -920,7 +920,7 @@ func TestExpSquare(t *testing.T) {
 			// specifically, there should be no div-zero panic
 			// m = &Int{abs: nat{}} // m != nil && len(m.abs) == 0
 			m := NewInt(0)
-			z2 := new(Int).Exp(x, y, m)
+			z2 := new(Int).ExpSquare(x, y, m)
 			if z2.Cmp(z1) != 0 {
 				t.Errorf("#%d: got %s want %s", i, z1, z2)
 			}
