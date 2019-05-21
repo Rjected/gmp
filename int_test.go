@@ -865,6 +865,69 @@ func TestExp(t *testing.T) {
 	}
 }
 
+var expSquareTests = []struct {
+	x, y, m string
+	out     string
+}{
+	{"5", "-7", "", "1"},
+	{"-5", "-7", "", "1"},
+	{"5", "0", "", "1"},
+	{"-5", "0", "", "1"},
+	{"5", "1", "", "25"},
+	{"-5", "1", "", "25"},
+	{"-2", "3", "2", "0"},
+	{"5", "2", "", "625"},
+	{"1", "65537", "2", "1"},
+	{"0x8000000000000000", "2", "", "0x1000000000000000000000000000000000000000000000000000000000000000"},
+	{"0x8000000000000000", "2", "6719", "6133"},
+	{"0x8000000000000000", "3", "6719", "727"},
+	{"4283", "10", "6719", "3797"},
+	{"43", "10", "67009", "62485"},
+	{"43", "20", "2560", "1"},
+	{"43", "20", "2561", "1283"},
+}
+
+func TestExpSquare(t *testing.T) {
+	for i, test := range expTests {
+		x, ok1 := new(Int).SetString(test.x, 0)
+		y, ok2 := new(Int).SetString(test.y, 0)
+		out, ok3 := new(Int).SetString(test.out, 0)
+
+		var ok4 bool
+		var m *Int
+
+		if len(test.m) == 0 {
+			m, ok4 = nil, true
+		} else {
+			m, ok4 = new(Int).SetString(test.m, 0)
+		}
+
+		if !ok1 || !ok2 || !ok3 || !ok4 {
+			t.Errorf("#%d: error in input", i)
+			continue
+		}
+
+		z1 := new(Int).Exp(x, y, m)
+		if !isNormalized(z1) {
+			t.Errorf("#%d: %v is not normalized", i, *z1)
+		}
+		if z1.Cmp(out) != 0 {
+			t.Errorf("#%d: got %s want %s", i, z1, out)
+		}
+
+		if m == nil {
+			// the result should be the same as for m == 0;
+			// specifically, there should be no div-zero panic
+			// m = &Int{abs: nat{}} // m != nil && len(m.abs) == 0
+			m := NewInt(0)
+			z2 := new(Int).Exp(x, y, m)
+			if z2.Cmp(z1) != 0 {
+				t.Errorf("#%d: got %s want %s", i, z1, z2)
+			}
+		}
+	}
+}
+
 func checkGcd(aBytes, bBytes []byte) bool {
 	x := new(Int)
 	y := new(Int)
